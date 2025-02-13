@@ -75,8 +75,8 @@ namespace SecretsOfTheScug
             BeginInitializing<ItemBase>(allTypes);
             Modules.Language.TryPrintOutput("FortunesItems.txt");
 
-            BeginInitializing<EquipmentBase>(allTypes);
-            Modules.Language.TryPrintOutput("FortunesEquipment.txt");
+            //BeginInitializing<EquipmentBase>(allTypes);
+            //Modules.Language.TryPrintOutput("FortunesEquipment.txt");
 
             //RalseiSurvivor.instance.InitializeCharacterMaster();
 

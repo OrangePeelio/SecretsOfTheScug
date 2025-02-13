@@ -17,23 +17,22 @@ namespace SecretsOfTheScug.Modules
     {
         public static void Init()
         {
-            On.RoR2.GlobalEventManager.OnHitEnemy += GlobalEventManager_OnHitEnemy;
+            On.RoR2.GlobalEventManager.ProcessHitEnemy += GlobalEventManager_OnHitEnemy;
         }
 
-        public delegate void HitHookEventHandler(CharacterBody attackerBody, DamageInfo damageInfo, CharacterBody victimBody);
+        public delegate void HitHookEventHandler(CharacterBody attackerBody, DamageInfo damageInfo, GameObject victim);
         public static event HitHookEventHandler GetHitBehavior;
-        private static void GlobalEventManager_OnHitEnemy(On.RoR2.GlobalEventManager.orig_OnHitEnemy orig, GlobalEventManager self, DamageInfo damageInfo, GameObject victim)
+        private static void GlobalEventManager_OnHitEnemy(On.RoR2.GlobalEventManager.orig_ProcessHitEnemy orig, GlobalEventManager self, DamageInfo damageInfo, GameObject victim)
         {
             if (damageInfo.attacker && damageInfo.procCoefficient > 0f)
             {
-                CharacterBody attackerBody = null;
-                CharacterBody victimBody = null;
-                if (damageInfo.attacker.TryGetComponent(out attackerBody) && victim.TryGetComponent(out victimBody))
+                CharacterBody attackerBody = damageInfo.attacker.GetComponent<CharacterBody>();
+                if (attackerBody != null)
                 {
                     CharacterMaster attackerMaster = attackerBody.master;
                     if (attackerMaster != null)
                     {
-                        GetHitBehavior?.Invoke(attackerBody, damageInfo, victimBody);
+                        GetHitBehavior?.Invoke(attackerBody, damageInfo, victim);
                     }
                 }
             }
