@@ -65,9 +65,9 @@ namespace SecretsOfTheScug.Items
 
         private void CreatePear()
         {
-            pear = Addressables.LoadAssetAsync<GameObject>("RoR2/Base/Tooth/HealPack.prefab").WaitForCompletion().InstantiateClone("Chocolate", true);           
+            pear = Addressables.LoadAssetAsync<GameObject>("RoR2/Base/Tooth/HealPack.prefab").WaitForCompletion().InstantiateClone("Pear", true);           
         }
-            private void PearWigglerOnHit(CharacterBody attackerBody, DamageInfo damageInfo, GameObject victim)
+        private void PearWigglerOnHit(CharacterBody attackerBody, DamageInfo damageInfo, GameObject victim)
         {
             if (damageInfo.damage / attackerBody.damage < 4)
             {
