@@ -67,17 +67,17 @@ namespace SecretsOfTheScug
             Type[] allTypes = Assembly.GetExecutingAssembly().GetTypes();
 
             //new RalseiSurvivor().Init();
-            /*BeginInitializing<SurvivorBase>(allTypes);
-            Modules.Language.TryPrintOutput("FortunesSurvivors.txt");
-
-            BeginInitializing<SkillBase>(allTypes);
-            Modules.Language.TryPrintOutput("FortunesSkills.txt");*/
+            //BeginInitializing<SurvivorBase>(allTypes);
+            //Modules.Language.TryPrintOutput("FortunesSurvivors.txt");
+            //
+            //BeginInitializing<SkillBase>(allTypes);
+            //Modules.Language.TryPrintOutput("FortunesSkills.txt");
 
             BeginInitializing<ItemBase>(allTypes);
             Modules.Language.TryPrintOutput("FortunesItems.txt");
 
-            //BeginInitializing<EquipmentBase>(allTypes);
-            //Modules.Language.TryPrintOutput("FortunesEquipment.txt");
+            BeginInitializing<EquipmentBase>(allTypes);
+            Modules.Language.TryPrintOutput("FortunesEquipment.txt");
 
             //RalseiSurvivor.instance.InitializeCharacterMaster();
 
@@ -86,7 +86,7 @@ namespace SecretsOfTheScug
 
             ////refer to guide on how to build and distribute your mod with the proper folders
         }
-        private void BeginInitializing<T>(Type[] allTypes) where T : SharedBase
+        private void BeginInitializing<T>(Type[] allTypes, string fileName = "") where T : SharedBase
         {
             Type baseType = typeof(T);
             //base types must be a base and not abstract
@@ -96,9 +96,13 @@ namespace SecretsOfTheScug
                 return;
             }
 
-            Log.Debug(Log.Combine(baseType.Name) + "Initializing");
 
             IEnumerable<Type> objTypesOfBaseType = allTypes.Where(type => !type.IsAbstract && type.IsSubclassOf(baseType));
+
+            if (objTypesOfBaseType.Count() <= 0)
+                return;
+
+            Log.Debug(Log.Combine(baseType.Name) + "Initializing");
 
             foreach (var objType in objTypesOfBaseType)
             {
@@ -112,6 +116,9 @@ namespace SecretsOfTheScug
                     Log.Debug(s + "Initialized");
                 }
             }
+
+            if (!string.IsNullOrEmpty(fileName))
+                Modules.Language.TryPrintOutput(fileName);
         }
 
         bool ValidateBaseType(SharedBase obj)
