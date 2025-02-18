@@ -92,8 +92,6 @@ namespace SecretsOfTheScug.Items
             }
         }
 
-        public abstract void Init(ConfigFile config);
-
         public override void Lang()
         {
             LanguageAPI.Add("ITEM_" + ItemLangTokenName + "_NAME", ItemName);

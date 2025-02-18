@@ -57,9 +57,9 @@ namespace SecretsOfTheScug.Items
         }
         public override void Hooks()
         {
-            On.RoR2.HealthComponent.TakeDamageProcess += PearWigglerTakeDamage;
-            GetHitBehavior += PearWigglerOnHit;
             pearBuff = Content.CreateAndAddBuff("PearBuff", null, Color.green, true, false);
+            GetHitBehavior += PearWigglerOnHit;
+            On.RoR2.HealthComponent.TakeDamageProcess += PearWigglerTakeDamage;
         }
 
 
@@ -83,6 +83,7 @@ namespace SecretsOfTheScug.Items
 
         private void PearWigglerTakeDamage(On.RoR2.HealthComponent.orig_TakeDamageProcess orig, RoR2.HealthComponent self, RoR2.DamageInfo damageInfo)
         {
+            orig(self, damageInfo);
             CharacterBody body = self?.body;
             int itemCount = GetCount(body);
             if (itemCount <= 0)
@@ -126,8 +127,9 @@ namespace SecretsOfTheScug.Items
             a.AddBarrier(barrierBase + (barrierStack * i));
         }
 
-        public override void Init(ConfigFile config)
+        public override void Init()
         {
+            
             CreatePear();
             base.Init();
         }

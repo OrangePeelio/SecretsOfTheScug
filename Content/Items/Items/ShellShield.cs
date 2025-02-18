@@ -82,10 +82,9 @@ namespace SecretsOfTheScug.Items
             self.AddBarrierAuthority(barrierToAdd);
 
         }
-
-        public override void Init(ConfigFile config)
+        public override void Init()
         {
-            Init();
+            base.Init();
         }
     }
 }
