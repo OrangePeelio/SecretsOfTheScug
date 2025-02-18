@@ -24,6 +24,10 @@ namespace SecretsOfTheScug.Items
 
     public abstract class ItemBase : SharedBase
     {
+        public override AssetBundle assetBundle => ScugPlugin.mainAssetBundle;
+        public override string ConfigName => "Items : " + ItemName;
+
+
         public static Dictionary<string, ItemDef> DefDictionary = new Dictionary<string, ItemDef>();
 
         public abstract string ItemName { get; }
@@ -40,9 +44,14 @@ namespace SecretsOfTheScug.Items
         public ItemDef ItemsDef;
 
         public virtual bool CanRemove { get; } = false;
-        public virtual bool IsDisabled { get; } = false;
         public virtual bool IsHidden { get; } = false;
         public virtual ExpansionDef RequiredExpansion { get; } = null;
+
+        public override void Init()
+        {
+            base.Init();
+            CreateItem();
+        }
 
         internal static bool CheckDLC1Entitlement()
         {
@@ -91,8 +100,6 @@ namespace SecretsOfTheScug.Items
                 }
             }
         }
-
-        public abstract void Init(ConfigFile config);
 
         public override void Lang()
         {

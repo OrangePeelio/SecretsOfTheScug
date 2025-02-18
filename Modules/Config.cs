@@ -134,31 +134,66 @@ namespace SecretsOfTheScug.Modules
 
             foreach (FieldInfo field in info.GetFields())
             {
+                //only works on static fields
                 if (!field.IsStatic) continue;
 
                 Type t = field.FieldType;
                 AutoConfigAttribute configattr = field.GetCustomAttribute<AutoConfigAttribute>();
+                //ignore fields that arent marked as autoconfigurable
                 if (configattr == null) continue;
 
-                MethodInfo method = typeof(ConfigFile).GetMethods().Where(x => x.Name == nameof(ConfigFile.Bind)).First();
-                method = method.MakeGenericMethod(t);
-                ConfigEntryBase val = (ConfigEntryBase)method.Invoke(config, new object[] { new ConfigDefinition(section, configattr.name), configattr.defaultValue, new ConfigDescription(configattr.desc) });
-                ConfigEntryBase backupVal = (ConfigEntryBase)method.Invoke(Config.BackupConfig, new object[] { new ConfigDefinition(Regex.Replace(config.ConfigFilePath, "\\W", "") + " : " + section, configattr.name), val.DefaultValue, new ConfigDescription(configattr.desc) });
-                // Main.WRBLogger.LogDebug(section + " : " + configattr.name + " " + val.DefaultValue + " / " + val.BoxedValue + " ... " + backupVal.DefaultValue + " / " + backupVal.BoxedValue + " >> " + VersionChanged);
+                string configName = configattr.name;
+                object defaultValue = configattr.defaultValue;
+                string configDesc = configattr.desc;
 
-                if (!ConfigEqual(backupVal.DefaultValue, backupVal.BoxedValue))
-                {
-                    // Main.WRBLogger.LogDebug("Config Updated: " + section + " : " + configattr.name + " from " + val.BoxedValue + " to " + val.DefaultValue);
-                    if (true)//VersionChanged)
-                    {
-                        Log.Warning("Syncing config to new version");
-                        val.BoxedValue = val.DefaultValue;
-                        backupVal.BoxedValue = backupVal.DefaultValue;
-                    }
-                }
-                if (!ConfigEqual(val.DefaultValue, val.BoxedValue)) ConfigChanged = true;
-                field.SetValue(null, val.BoxedValue);
+                field.SetValue(null, DualBindToConfig(t, section, config, configName, defaultValue, configDesc));
             }
+        }
+
+        private static object DualBindToConfig(Type t, string section, ConfigFile config, string configName, object defaultValue, string configDesc)
+        {
+            if (string.IsNullOrWhiteSpace(section) || string.IsNullOrWhiteSpace(configName))
+                return defaultValue;
+            ConfigDescription desc = new ConfigDescription(configDesc);
+
+            //get the method for binding to a config file
+            MethodInfo method = typeof(ConfigFile).GetMethods().Where(x => x.Name == nameof(ConfigFile.Bind)).First();
+            method = method.MakeGenericMethod(t);
+
+            //bind to chosen config file
+            ConfigEntryBase configValue = (ConfigEntryBase)method.Invoke(config,
+                new object[] {
+                        new ConfigDefinition(section, configName),
+                        defaultValue,
+                        desc
+                });
+
+            //bind to backup config for versioning
+            ConfigEntryBase backupValue = (ConfigEntryBase)method.Invoke(Config.BackupConfig,
+                new object[] {
+                        new ConfigDefinition(Regex.Replace(config.ConfigFilePath, "\\W", "") + " : " + section, configName),
+                        defaultValue,
+                        desc
+                });
+
+            //if the backup config's (new) default value is different from its current (set) value
+            if (!ConfigEqual(backupValue.DefaultValue, backupValue.BoxedValue))
+            {
+                if (true)//VersionChanged)
+                {
+                    Log.Warning("Syncing config to new version");
+                    //reset set values to new defaults
+                    configValue.BoxedValue = configValue.DefaultValue;
+                    backupValue.BoxedValue = backupValue.DefaultValue;
+                }
+            }
+            if (!ConfigEqual(configValue.DefaultValue, configValue.BoxedValue)) ConfigChanged = true;
+            return configValue.BoxedValue;
+        }
+
+        public static T DualBindToConfig<T>(string section, ConfigFile config, string configName, T defaultValue, string configDesc)
+        {
+            return (T)DualBindToConfig(typeof(T), section, config, configName, defaultValue, configDesc);
         }
 
         private static bool ConfigEqual(object a, object b)

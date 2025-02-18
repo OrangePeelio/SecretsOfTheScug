@@ -35,6 +35,7 @@ namespace SecretsOfTheScug
 
         public static ScugPlugin instance;
         public static AssetBundle mainAssetBundle;
+        public static bool autosprintLoaded = false;// Tools.isLoaded("com.johnedwa.RTAutoSprintEx");
 
         #region asset paths
         public const string iconsPath = "";

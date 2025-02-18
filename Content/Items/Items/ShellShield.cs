@@ -47,7 +47,6 @@ namespace SecretsOfTheScug.Items
         public override Sprite ItemIcon => LoadItemIcon();
         #endregion
 
-        public override AssetBundle assetBundle => ScugPlugin.mainAssetBundle;
         public override ItemDisplayRuleDict CreateItemDisplayRules()
         {
             return null;
@@ -81,11 +80,6 @@ namespace SecretsOfTheScug.Items
             barrierToAdd += flatBase + flatStack * itemCount;
             self.AddBarrierAuthority(barrierToAdd);
 
-        }
-
-        public override void Init(ConfigFile config)
-        {
-            Init();
         }
     }
 }
