@@ -39,11 +39,14 @@ namespace SecretsOfTheScug.Skills
         public abstract Type BaseSkillDef { get; }
         public abstract string CharacterName { get; }
         public abstract SkillSlot SkillSlot { get; }
+        public abstract float BaseCooldown { get; }
+        public abstract InterruptPriority InterruptPriority { get; }
         public abstract SimpleSkillData SkillData { get; }
         public string[] KeywordTokens;
         public virtual string ActivationStateMachineName { get; set; } = "Weapon";
-        public SkillDef SkillDef { 
-            get 
+        public SkillDef SkillDef
+        {
+            get
             {
                 if (_SkillDef == null)
                     _SkillDef = (SkillDef)ScriptableObject.CreateInstance(BaseSkillDef);
@@ -74,7 +77,7 @@ namespace SecretsOfTheScug.Skills
         public Sprite LoadSpriteFromRorSkill(string path) { return Addressables.LoadAssetAsync<SkillDef>(path).WaitForCompletion().icon; }
         private void CreateSkill()
         {
-            if(SkillDef == null)
+            if (SkillDef == null)
                 SkillDef = (SkillDef)ScriptableObject.CreateInstance(BaseSkillDef);
 
             Content.AddEntityState(ActivationState);
@@ -86,23 +89,29 @@ namespace SecretsOfTheScug.Skills
             SkillDef.activationStateMachineName = ActivationStateMachineName;
 
             SkillDef.keywordTokens = KeywordTokens;
-            SkillDef.icon = Icon; // assetBundle.LoadAsset<Sprite>(ScugPlugin.iconsPath + "Skill/" + IconName + ".png");
+            SkillDef.icon = Icon; // assetBundle.LoadAsset<Sprite>(FortunesPlugin.iconsPath + "Skill/" + IconName + ".png");
 
             #region SkillData
-            SkillDef.baseMaxStock = SkillData.baseMaxStock;
-            SkillDef.baseRechargeInterval = SkillData.baseRechargeInterval;
+            SkillDef.baseRechargeInterval = Bind(BaseCooldown, "Base Cooldown");
+            SkillDef.baseMaxStock = Bind(SkillData.baseMaxStock, "Base Max Stock");
+            SkillDef.rechargeStock = Mathf.Min(Bind(SkillData.rechargeStock, "Recharge Stock"), SkillDef.baseMaxStock);
+            SkillDef.interruptPriority = this.InterruptPriority;
             SkillDef.beginSkillCooldownOnSkillEnd = SkillData.beginSkillCooldownOnSkillEnd;
-            SkillDef.canceledFromSprinting = ScugPlugin.autoSprintLoaded ? false : SkillData.canceledFromSprinting;
-            SkillDef.cancelSprintingOnActivation = SkillData.cancelSprintingOnActivation;
             SkillDef.dontAllowPastMaxStocks = SkillData.dontAllowPastMaxStocks;
             SkillDef.fullRestockOnAssign = SkillData.fullRestockOnAssign;
-            SkillDef.interruptPriority = SkillData.interruptPriority;
-            SkillDef.isCombatSkill = SkillData.isCombatSkill;
-            SkillDef.mustKeyPress = SkillData.mustKeyPress;
-            SkillDef.rechargeStock = SkillData.rechargeStock;
+            SkillDef.isCombatSkill = Bind(SkillData.isCombatSkill, "Is Combat Skill");
+            SkillDef.mustKeyPress = Bind(SkillData.mustKeyPress, "Must Key Press", "Setting to FALSE will allow the skill to be recast after it ends as long as the button is held.");
             SkillDef.requiredStock = SkillData.requiredStock;
             SkillDef.resetCooldownTimerOnUse = SkillData.resetCooldownTimerOnUse;
             SkillDef.stockToConsume = SkillData.stockToConsume;
+
+            SkillDef.cancelSprintingOnActivation = Bind(SkillData.cancelSprintingOnActivation, "Cancels Sprinting", "Recommended to use HuntressBuffULTIMATE for intended behavior.");
+            SkillDef.forceSprintDuringState = Bind(SkillData.forceSprintingDuringState, "Force Sprinting During State", "Used by mobility skills.");
+            this.SkillDef.canceledFromSprinting =
+                !(ScugPlugin.autosprintLoaded || !SkillData.cancelSprintingOnActivation || SkillData.forceSprintingDuringState)
+                && Bind(SkillData.canceledFromSprinting, "Canceled From Sprinting",
+                "Note: Only set to true if AUTOSPRINT isnt loaded, the skill cancels sprinting, and the skill doesn't force sprinting. " +
+                "This avoids situations where the skill can cancel itself without additional input.");
             #endregion
 
             Content.AddSkillDef(SkillDef);
@@ -214,20 +223,19 @@ namespace SecretsOfTheScug.Skills
         }
         public class SimpleSkillData
         {
-            public SimpleSkillData(int baseMaxStock = 1, float baseRechargeInterval = 1f, bool beginSkillCooldownOnSkillEnd = false,
-                bool canceledFromSprinting = false, bool cancelSprintingOnActivation = true, bool dontAllowPastMaxStocks = true,
-                bool fullRestockOnAssign = true, InterruptPriority interruptPriority = InterruptPriority.Any,
+            public SimpleSkillData(int baseMaxStock = 1, bool beginSkillCooldownOnSkillEnd = false,
+                bool canceledFromSprinting = false, bool cancelSprintingOnActivation = true, bool forceSprintingDuringState = false,
+                bool dontAllowPastMaxStocks = true, bool fullRestockOnAssign = true,
                 bool isCombatSkill = true, bool mustKeyPress = false, int rechargeStock = 1,
                 int requiredStock = 1, bool resetCooldownTimerOnUse = false, int stockToConsume = 1)
             {
                 this.baseMaxStock = baseMaxStock;
-                this.baseRechargeInterval = baseRechargeInterval;
                 this.beginSkillCooldownOnSkillEnd = beginSkillCooldownOnSkillEnd;
                 this.canceledFromSprinting = canceledFromSprinting;
                 this.cancelSprintingOnActivation = cancelSprintingOnActivation;
+                this.forceSprintingDuringState = forceSprintingDuringState;
                 this.dontAllowPastMaxStocks = dontAllowPastMaxStocks;
                 this.fullRestockOnAssign = fullRestockOnAssign;
-                this.interruptPriority = interruptPriority;
                 this.isCombatSkill = isCombatSkill;
                 this.mustKeyPress = mustKeyPress;
                 this.rechargeStock = rechargeStock;
@@ -237,13 +245,12 @@ namespace SecretsOfTheScug.Skills
             }
 
             internal int baseMaxStock;
-            internal float baseRechargeInterval;
             internal bool beginSkillCooldownOnSkillEnd;
             internal bool canceledFromSprinting;
             internal bool cancelSprintingOnActivation;
+            internal bool forceSprintingDuringState;
             internal bool dontAllowPastMaxStocks;
             internal bool fullRestockOnAssign;
-            internal InterruptPriority interruptPriority;
             internal bool isCombatSkill;
             internal bool mustKeyPress;
             internal int rechargeStock;

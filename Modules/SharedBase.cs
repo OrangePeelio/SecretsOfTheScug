@@ -8,6 +8,7 @@ namespace SecretsOfTheScug.Modules
 {
     public abstract class SharedBase
     {
+        public virtual bool lockEnabled { get; } = false;
         public abstract string ConfigName { get; }
         public virtual bool isEnabled { get; } = true;
         public static ManualLogSource Logger => Log._logSource;
@@ -21,6 +22,11 @@ namespace SecretsOfTheScug.Modules
             ConfigManager.HandleConfigAttributes(GetType(), ConfigName, Config.MyConfig);
             Hooks();
             Lang();
+        }
+
+        public T Bind<T>(T defaultValue, string configName, string configDesc = "")
+        {
+            return ConfigManager.DualBindToConfig<T>(ConfigName, Config.MyConfig, configName, defaultValue, configDesc);
         }
 
         public static float GetHyperbolic(float firstStack, float cap, float chance) // Util.ConvertAmplificationPercentageIntoReductionPercentage but Better :zanysoup:

@@ -38,19 +38,17 @@ namespace SecretsOfTheScug.Equipment
 
         public virtual bool CanDrop { get; } = true;
 
-        public virtual float Cooldown { get; } = 60f;
-
-        public virtual bool EnigmaCompatible { get; } = true;
-
         public virtual bool IsBoss { get; } = false;
 
         public virtual bool IsLunar { get; } = false;
-        public virtual bool IsHidden { get; } = false;
         public virtual ColorCatalog.ColorIndex ColorIndex { get; } = ColorCatalog.ColorIndex.Equipment;
 
         public EquipmentDef EquipDef;
         public virtual ExpansionDef RequiredExpansion { get; } = null;
 
+        public abstract float BaseCooldown { get; }
+        public abstract bool EnigmaCompatible { get; }
+        public abstract bool CanBeRandomlyActivated { get; }
 
         internal static void CloneVanillaDisplayRules(UnityEngine.Object newDef, UnityEngine.Object vanillaDef)
         {
@@ -77,7 +75,12 @@ namespace SecretsOfTheScug.Equipment
                 }
             }
         }
-        public abstract void Init(ConfigFile config);
+
+        public override void Init()
+        {
+            base.Init();
+            CreateEquipment();
+        }
 
         public abstract ItemDisplayRuleDict CreateItemDisplayRules();
 
@@ -103,8 +106,9 @@ namespace SecretsOfTheScug.Equipment
                 EquipDef.appearsInSinglePlayer = AppearsInSinglePlayer;
                 EquipDef.appearsInMultiPlayer = AppearsInMultiPlayer;
                 EquipDef.canDrop = CanDrop;
-                EquipDef.cooldown = Cooldown;
-                EquipDef.enigmaCompatible = EnigmaCompatible;
+                EquipDef.cooldown = Bind(BaseCooldown, "Base Cooldown");
+                EquipDef.enigmaCompatible = Bind(EnigmaCompatible, "Enigma-Compatible");
+                EquipDef.canBeRandomlyTriggered = Bind(CanBeRandomlyActivated, "Bottled Chaos-Compatible");
                 EquipDef.isBoss = IsBoss;
                 EquipDef.isLunar = IsLunar;
                 EquipDef.colorIndex = ColorIndex;
@@ -114,11 +118,6 @@ namespace SecretsOfTheScug.Equipment
             if (itemDisplayRules == null)
             {
                 itemDisplayRules = new ItemDisplayRuleDict();
-            }
-
-            if (EquipmentLangTokenName == "GUILLOTINEEQUIPMENT")
-            {
-                EquipDef.unlockableDef = UnlockableCatalog.GetUnlockableDef("KillElitesMilestone");
             }
 
             ItemAPI.Add(new CustomEquipment(EquipDef, itemDisplayRules));

@@ -49,8 +49,6 @@ namespace SecretsOfTheScug.Items
         public static BuffDef pearBuff;
         GameObject pear;
 
-        public override AssetBundle assetBundle => ScugPlugin.mainAssetBundle;
-
         public override ItemDisplayRuleDict CreateItemDisplayRules()
         {
             return null;
